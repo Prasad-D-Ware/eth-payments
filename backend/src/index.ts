@@ -1,4 +1,4 @@
-import express from "express";
+import express, { type Request, type Response } from "express";
 import prisma from "./lib/prisma";
 import { HDNodeWallet } from "ethers";
 import { mnemonicToSeedSync } from "bip39";
@@ -11,7 +11,7 @@ const app = express();
 
 app.use(express.json());
 
-app.post("/signup", async (req,res)=> {
+app.post("/signup", async (req : Request , res : Response)=> {
     const { email , password } = req.body;
  
     if(!email || !password) {
@@ -37,6 +37,7 @@ app.post("/signup", async (req,res)=> {
 				success : false,
 				message : "Failed to create user!"
 			})
+			return;
 		}
 		
 		// the address generation logic 
@@ -66,6 +67,54 @@ app.post("/signup", async (req,res)=> {
 			success : false,
 			message : "Failed to Create User!",
 		})
+		return;
+	}
+})
+
+app.get("/get-deposit-address", async (req : Request,res : Response) =>{
+
+	const { user_id } = req.query;
+
+	if(!user_id) {
+		res.json({
+			status : false,
+			message : "No User id provided"
+		})
+		return;
+	}
+
+	try{
+		
+		const user = await prisma.user.findFirst({
+			where : {
+				id : parseInt(user_id as string)
+			},
+			select : {
+				deposit_address : true
+			}
+		})
+		
+		if(!user){
+			res.json({
+				status : false,
+				message : "No User Found!"
+			})
+			return;
+		}
+
+		res.json({
+			success : true,
+			message : "Deposit address retrieved!",
+			data : user
+		})
+
+	}catch(err : any){
+		console.log(err.message);
+		res.json({
+			success : false,
+			message : "Failed retrieving deposit address"
+		})
+		return;
 	}
 })
 
