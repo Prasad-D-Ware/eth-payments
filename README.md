@@ -1,1 +1,1 @@
-# payment-system
+# eth-payments
